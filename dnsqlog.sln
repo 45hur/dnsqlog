@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.705
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnsqlog", "dnsqlog\dnsqlog.vcxproj", "{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77AD7B84-B6FD-4EF7-8868-300A73DCF7E0}"
+	ProjectSection(SolutionItems) = preProject
+		config.docker = config.docker
+		Dockerfile = Dockerfile
+		Dockerfile.git = Dockerfile.git
+		Dockerfile.local = Dockerfile.local
+		mason.build.patch = mason.build.patch
+		dnsqlog\meson.build = dnsqlog\meson.build
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|ARM.ActiveCfg = Debug|ARM
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|ARM.Build.0 = Debug|ARM
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|x64.ActiveCfg = Debug|x64
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|x64.Build.0 = Debug|x64
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|x86.ActiveCfg = Debug|x86
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Debug|x86.Build.0 = Debug|x86
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|ARM.ActiveCfg = Release|ARM
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|ARM.Build.0 = Release|ARM
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|x64.ActiveCfg = Release|x64
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|x64.Build.0 = Release|x64
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|x86.ActiveCfg = Release|x86
+		{0E1ECFF2-915E-48FB-AF19-4CAFEDAC8EBE}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A3A49127-B06B-4065-A317-3EBAC6707685}
+	EndGlobalSection
+EndGlobal

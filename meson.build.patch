@@ -1,0 +1,12 @@
+diff --git a/modules/meson.build b/modules/meson.build
+index 90c3449f..1b255b96 100644
+--- a/modules/meson.build
++++ b/modules/meson.build
+@@ -51,6 +51,7 @@ subdir('policy')
+ subdir('refuse_nord')
+ subdir('stats')
+ subdir('view')
++subdir('dnsqlog')
+ if libsystemd.found() and libsystemd.version().version_compare('>=183')
+   subdir('sd_watchdog')
+ endif
