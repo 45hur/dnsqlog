@@ -53,13 +53,13 @@ int create(void **args)
 	E(mdb_txn_commit(txn));
 	mdb_close(mdb_env, dbi);
 
-	init();
+	//init();
 
-	pthread_t thr_id;
-	loop = 1;
-	E(pthread_create(&thr_id, NULL, &threadproc, NULL));
+	//pthread_t thr_id;
+	//loop = 1;
+	//E(pthread_create(&thr_id, NULL, &threadproc, NULL));
 
-	*args = (void *)thr_id;
+	//*args = (void *)thr_id;
 
 	debugLog("\"method\":\"create\",\"message\":\"created\"");
 
@@ -74,9 +74,9 @@ int destroy(void *args)
 	mdb_env_close(mdb_env);
 	mdb_env = NULL;
 
-	void *res = NULL;
+	/*void *res = NULL;
 	pthread_t thr_id = (pthread_t)args;
-	E(pthread_join(thr_id, res));
+	E(pthread_join(thr_id, res));*/
 
 	debugLog("\"method\":\"destroy\",\"message\":\"destroyed\"");
 

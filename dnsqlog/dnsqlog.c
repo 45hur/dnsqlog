@@ -229,17 +229,6 @@ int redirect(kr_layer_t *ctx, int rrtype, const char * originaldomain)
 				sinkit_sinkhole = "0.0.0.0";
 			}
 
-			//iprange iprange_item = {};
-			//if (cache_iprange_contains(cached_iprange_slovakia, origin, &iprange_item) == 1)
-			//{
-			//	debugLog("\"message\":\"origin matches slovakia\"");
-			//	sinkit_sinkhole = "194.228.41.77";
-			//}
-			//else
-			//{
-			//	debugLog("\"message\":\"origin does not match slovakia\"");
-			//}
-
 			if (parse_addr_str(&sinkhole, sinkit_sinkhole) != 0)
 			{
 				return kr_error(EINVAL);
@@ -285,19 +274,6 @@ int redirect(kr_layer_t *ctx, int rrtype, const char * originaldomain)
 		{
 			sinkit_sinkhole = "0.0.0.0";
 		}
-
-		//iprange iprange_item = {};
-		//if (cache_iprange_contains(cached_iprange_slovakia, origin, &iprange_item) == 1)
-		//{
-		//	sprintf(message, "\"message\":\"origin matches slovakia\"");
-		//	logtosyslog(message);
-		//	sinkit_sinkhole = "194.228.41.77";
-		//}
-		//else
-		//{
-		//	sprintf(message, "\"message\":\"origin does not match slovakia\"");
-		//	logtosyslog(message);
-		//}
 
 		if (parse_addr_str(&sinkhole, sinkit_sinkhole) != 0)
 		{
