@@ -85,6 +85,7 @@ EXPOSE 53/UDP 53/TCP 443/TCP 853/TCP 8453/TCP
 # Fetch Knot Resolver + Knot DNS libraries from build image
 COPY --from=build /tmp/root/ /
 RUN ldconfig
+RUN mkdir /var/whalebone/dnsqlog
 
 ENTRYPOINT ["/usr/sbin/kresd"]
 CMD ["-c", "/etc/knot-resolver/kresd.conf"]
