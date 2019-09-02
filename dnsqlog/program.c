@@ -88,17 +88,9 @@ int search(const char * domainToFind, struct ip_addr * userIpAddress, const char
 	char message[2048] = {};
 	unsigned long long crc = crc64(0, (const char*)domainToFind, strlen(domainToFind));
 	unsigned long long crcIoC = crc64(0, (const char*)domainToFind, strlen(originaldomain));
-	debugLog("\"method\":\"search\",\"message\":\"entry\",\"ioc=\"%s\",\"crc\":\"%llx\",\"crcioc\":\"%llx\"", domainToFind, crc, crcIoC);
+	//debugLog("\"method\":\"search\",\"message\":\"entry\",\"ioc=\"%s\",\"crc\":\"%llx\",\"crcioc\":\"%llx\"", domainToFind, crc, crcIoC);
 
-	//domain domain_item = {};
-	//if (cache_domain_contains(cached_domain, crc, &domain_item, 0) == 1)
-	{
-		debugLog("\"method\":\"search\",\"message\":\"detected ioc '%s'\"", domainToFind);
-	}
-	//else
-	{
-		debugLog("\"method\":\"search\",\"message\":\"cache domains does not have a match to '%s'\"", domainToFind);
-	}
+	fileLog("\"method\":\"search\",\"message\":\"detected ioc '%s' at domain '%s' from ip '%s%'\"", domainToFind, originaldomain, userIpAddressString);
 
 	return 0;
 }
