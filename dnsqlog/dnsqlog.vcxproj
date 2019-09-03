@@ -28,7 +28,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc64.h" />
-    <ClInclude Include="iprange.h" />
     <ClInclude Include="lmdb.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="midl.h" />
@@ -38,7 +37,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="crc64.c" />
-    <ClCompile Include="iprange.c" />
     <ClCompile Include="log.c" />
     <ClCompile Include="mdb.c" />
     <ClCompile Include="midl.c" />

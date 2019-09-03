@@ -2,7 +2,6 @@
 
 dnsqlog_src = files([
   'crc64.c',
-  'iprange.c',
   'log.c',
   'program.c',
   'dnsqlog.c',

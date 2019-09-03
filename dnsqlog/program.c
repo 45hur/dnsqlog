@@ -48,24 +48,16 @@ int create(void **args)
     pthread_mutex_init(&(thread_shared->mutex), &shared);
 
 	E(mdb_env_create(&mdb_env));
-	E(mdb_env_set_maxreaders(mdb_env, 16));
-	E(mdb_env_set_maxdbs(mdb_env, 4));
+	E(mdb_env_set_maxreaders(mdb_env, 127));
+	E(mdb_env_set_maxdbs(mdb_env, 1));
 	size_t max = 1073741824;
 	E(mdb_env_set_mapsize(mdb_env, max)); //1GB
-	E(mdb_env_open(mdb_env, "/var/whalebone/dnsqlog", /*MDB_FIXEDMAP | MDB_NOSYNC*/ 0, 0664));
+	E(mdb_env_open(mdb_env, C_MOD_LMDB_PATH, /*MDB_FIXEDMAP | MDB_NOSYNC*/ 0, 0664));
 
 	E(mdb_txn_begin(mdb_env, 0, 0, &txn));
 	E(mdb_dbi_open(txn, "cache", MDB_CREATE, &dbi));
 	E(mdb_txn_commit(txn));
 	mdb_close(mdb_env, dbi);
-
-	//init();
-
-	//pthread_t thr_id;
-	//loop = 1;
-	//E(pthread_create(&thr_id, NULL, &threadproc, NULL));
-
-	//*args = (void *)thr_id;
 
 	debugLog("\"method\":\"create\",\"message\":\"created\"");
 
@@ -80,10 +72,6 @@ int destroy(void *args)
 	mdb_env_close(mdb_env);
 	mdb_env = NULL;
 
-	/*void *res = NULL;
-	pthread_t thr_id = (pthread_t)args;
-	E(pthread_join(thr_id, res));*/
-
 	munmap(thread_shared, sizeof(struct shared*));
     shm_unlink(C_MOD_MUTEX);
 
@@ -92,73 +80,94 @@ int destroy(void *args)
 	return 0;
 }
 
-int search(const char * domainToFind, struct ip_addr * userIpAddress, const char * userIpAddressString, int rrtype, char * originaldomain, char * logmessage)
+int increment(const char *client, const char *query, const char *answer, const int type)
 {
-	char message[2048] = {};
-	unsigned long long crc = crc64(0, (const char*)domainToFind, strlen(domainToFind));
-	unsigned long long crcIoC = crc64(0, (const char*)domainToFind, strlen(originaldomain));
-	//debugLog("\"method\":\"search\",\"message\":\"entry\",\"ioc=\"%s\",\"crc\":\"%llx\",\"crcioc\":\"%llx\"", domainToFind, crc, crcIoC);
+	MDB_dbi dbi = NULL;
+	MDB_val key, data;
+	MDB_txn *txn = 0;
+	int rc = 0;
+	char bkey[8] = { 0 };
+	time_t rawtime = NULL;
 
-	fileLog("\"method\":\"search\",\"message\":\"detected ioc '%s' at domain '%s' from ip '%s'\"", domainToFind, originaldomain, userIpAddressString);
+	char combokey[8192] = { 0 };
+	sprintf((char *)&combokey, "%s:%s:%s:%d", client, query, answer, type);
+
+	unsigned long long crc = crc64(0, combokey, strlen(combokey));
+	memcpy(&bkey, &crc, 8);
+
+	//Get data, if any
+	E(mdb_txn_begin(mdb_env, 0, MDB_TXN_FULL, &txn));
+	if ((rc = mdb_dbi_open(txn, "cache", 0, &dbi)) == 0)
+	{
+		key.mv_size = sizeof(unsigned long long);
+		key.mv_data = (void *)bkey;
+
+		if ((rc = mdb_get(txn, dbi, &key, &data)) == 0)
+		{
+			memcpy(&rawtime, data.mv_data, data.mv_size);
+		}
+		E(mdb_txn_commit(txn));
+	}
+	else
+	{
+		mdb_txn_abort(txn);
+	}
+	txn = 0;
+	mdb_close(mdb_env, dbi);
+
+	//Modify data
+	if (rawtime == NULL)
+	{
+		time(&rawtime);
+
+		txn = 0;
+		E(mdb_txn_begin (mdb_env, 0, 0, &txn));
+		E(mdb_dbi_open(txn, "cache", 0, &dbi));
+		key.mv_size = sizeof(unsigned long long);
+		key.mv_data = (void *)bkey;
+		data.mv_size = sizeof(time_t);
+		data.mv_data = (void *)&rawtime;
+		E(mdb_put(txn, dbi, &key, &data, 0));
+
+		E(mdb_txn_commit(txn));
+		mdb_close(mdb_env, dbi);
+
+		return 1;
+	}
+
+	time_t now;
+	time(&now);
+
+	int secs = difftime(now, rawtime);
+
+	//Update data
+	txn = 0;
+	E(mdb_txn_begin(mdb_env, 0, 0, &txn));
+	E(mdb_dbi_open(txn, "cache", 0, &dbi));
+	key.mv_size = sizeof(unsigned long long);
+	key.mv_data = (void *)bkey;
+	data.mv_size = sizeof(time_t);
+	data.mv_data = (void *)&now;
+	E(mdb_put(txn, dbi, &key, &data, 0));
+
+	E(mdb_txn_commit(txn));
+	mdb_close(mdb_env, dbi);
+
+	if (secs > 86400) // one day
+	{
+		return 1;
+	}
 
 	return 0;
 }
-
-int explode(char * domainToFind, struct ip_addr * userIpAddress, const char * userIpAddressString, int rrtype)
-{
-	char logmessage[2048] = { 0 };
-	char *ptr = domainToFind;
-	ptr += strlen(domainToFind);
-	int result = 0;
-	int found = 0;
-	while (ptr-- != (char *)domainToFind)
-	{
-		if (ptr[0] == '.')
-		{
-			if (++found > 1)
-			{
-				debugLog("\"method\":\"explode\",\"message\":\"search %s\"", ptr + 1);
-				if ((result = search(ptr + 1, userIpAddress, userIpAddressString, rrtype, domainToFind, logmessage)) != 0)
-				{
-					if (logmessage[0] != '\0')
-					{
-						fileLog(logmessage);
-					}
-					return result;
-				}
-			}
-		}
-		else
-		{
-			if (ptr == (char *)domainToFind)
-			{
-				debugLog("\"method\":\"explode\",\"message\":\"search %s\"", ptr);
-				if ((result = search(ptr, userIpAddress, userIpAddressString, rrtype, domainToFind, logmessage)) != 0)
-				{
-					if (logmessage[0] != '\0')
-					{
-						fileLog(logmessage);
-					}
-					return result;
-				}
-			}
-		}
-	}
-	if (logmessage[0] != '\0')
-	{
-		fileLog(logmessage);
-	}
-
-	return 0;
-}
-
 
 #ifdef NOKRES 
 
 static int usage()
 {
 	fprintf(stdout, "Available commands: ");
-	fprintf(stdout, "\n");
+	fprintf(stdout, "\n"); 
+	fprintf(stdout, "inc\n");
 	fprintf(stdout, "exit\n");
 	return 0;
 }
@@ -173,6 +182,10 @@ static int userInput()
 	{
 		return 0;
 	} 
+	else if (strcmp("inc", command) == 0)
+	{
+		increment("127.0.0.1", "google.com", "172.217.23.238", 1);
+	}
 	else
 	{
 		usage();

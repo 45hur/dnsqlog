@@ -154,21 +154,24 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					querieddomain[domainLen - 1] = '\0';
 				}
 
-				if (rr->type == KNOT_RRTYPE_A)
+				if (increment(userIpAddressString, querieddomain, buf, rr->ttl) == 1)
 				{
-					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"A\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
-				}
-				else if (rr->type == KNOT_RRTYPE_AAAA)
-				{
-					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"AAAA\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
-				}
-				else if (rr->type == KNOT_RRTYPE_CNAME)
-				{
-					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"CNAME\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
-				}
-				else
-				{
-					debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+					if (rr->type == KNOT_RRTYPE_A)
+					{
+						fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"A\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
+					}
+					else if (rr->type == KNOT_RRTYPE_AAAA)
+					{
+						fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"AAAA\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
+					}
+					else if (rr->type == KNOT_RRTYPE_CNAME)
+					{
+						fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"CNAME\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
+					}
+					else
+					{
+						debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+					}
 				}
 			}
 		}
@@ -261,92 +264,6 @@ int parse_addr_str(struct sockaddr_storage *sa, const char *addr)
 		return kr_error(EILSEQ);
 	}
 	return 0;
-}
-
-int redirect(kr_layer_t *ctx, int rrtype, const char * originaldomain)
-{
-	struct kr_request *request = (struct kr_request *)ctx->req;
-	struct kr_rplan *rplan = &request->rplan;
-	struct kr_query *last = array_tail(rplan->resolved);
-
-	if (rrtype == KNOT_RRTYPE_A || rrtype == KNOT_RRTYPE_AAAA)
-	{
-		uint16_t msgid = knot_wire_get_id(request->answer->wire);
-		kr_pkt_recycle(request->answer);
-
-		knot_pkt_put_question(request->answer, last->sname, last->sclass, last->stype);
-
-		knot_pkt_begin(request->answer, KNOT_ANSWER); //AUTHORITY?
-
-		struct sockaddr_storage sinkhole;
-		if (rrtype == KNOT_RRTYPE_A)
-		{
-			const char *sinkit_sinkhole = getenv("SINKIP");
-			if (sinkit_sinkhole == NULL || strlen(sinkit_sinkhole) == 0)
-			{
-				sinkit_sinkhole = "0.0.0.0";
-			}
-
-			if (parse_addr_str(&sinkhole, sinkit_sinkhole) != 0)
-			{
-				return kr_error(EINVAL);
-			}
-		}
-		else if (rrtype == KNOT_RRTYPE_AAAA)
-		{
-			const char *sinkit_sinkhole = getenv("SINKIPV6");
-			if (sinkit_sinkhole == NULL || strlen(sinkit_sinkhole) == 0)
-			{
-				sinkit_sinkhole = "0000:0000:0000:0000:0000:0000:0000:0001";
-			}
-			if (parse_addr_str(&sinkhole, sinkit_sinkhole) != 0)
-			{
-				return kr_error(EINVAL);
-			}
-		}
-
-		size_t addr_len = kr_inaddr_len((struct sockaddr *)&sinkhole);
-		const uint8_t *raw_addr = (const uint8_t *)kr_inaddr((struct sockaddr *)&sinkhole);
-
-		knot_wire_set_id(request->answer->wire, msgid);
-
-		kr_pkt_put(request->answer, last->sname, 1, KNOT_CLASS_IN, rrtype, raw_addr, addr_len);
-	}
-	else if (rrtype == KNOT_RRTYPE_CNAME)
-	{
-		uint8_t buff[KNOT_DNAME_MAXLEN];
-		knot_dname_t *dname = knot_dname_from_str(buff, originaldomain, sizeof(buff));
-		if (dname == NULL) {
-			return KNOT_EINVAL;
-		}
-
-		uint16_t msgid = knot_wire_get_id(request->answer->wire);
-		kr_pkt_recycle(request->answer);
-
-		knot_pkt_put_question(request->answer, dname, KNOT_CLASS_IN, KNOT_RRTYPE_A);
-		knot_pkt_begin(request->answer, KNOT_ANSWER);
-
-		struct sockaddr_storage sinkhole;
-		const char *sinkit_sinkhole = getenv("SINKIP");
-		if (sinkit_sinkhole == NULL || strlen(sinkit_sinkhole) == 0)
-		{
-			sinkit_sinkhole = "0.0.0.0";
-		}
-
-		if (parse_addr_str(&sinkhole, sinkit_sinkhole) != 0)
-		{
-			return kr_error(EINVAL);
-		}
-
-		size_t addr_len = kr_inaddr_len((struct sockaddr *)&sinkhole);
-		const uint8_t *raw_addr = (const uint8_t *)kr_inaddr((struct sockaddr *)&sinkhole);
-
-		knot_wire_set_id(request->answer->wire, msgid);
-
-		kr_pkt_put(request->answer, dname, 1, KNOT_CLASS_IN, KNOT_RRTYPE_A, raw_addr, addr_len);
-	}
-
-	return KR_STATE_DONE;
 }
 
 KR_EXPORT 
