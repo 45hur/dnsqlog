@@ -56,7 +56,7 @@ RUN git clone https://gitlab.labs.nic.cz/knot/knot-resolver.git /tmp/knot-resolv
         cd /tmp/knot-resolver && \
         git submodule update --init 
 
-RUN mkdir /tmp/dnsqlog
+RUN mkdir -p /tmp/dnsqlog
 WORKDIR /tmp/dnsqlog
 COPY ./dnsqlog/ ./
 WORKDIR /tmp/knot-resolver/modules/
@@ -85,7 +85,7 @@ EXPOSE 53/UDP 53/TCP 443/TCP 853/TCP 8453/TCP
 # Fetch Knot Resolver + Knot DNS libraries from build image
 COPY --from=build /tmp/root/ /
 RUN ldconfig
-RUN mkdir /var/whalebone/dnsqlog
+RUN mkdir -p /var/whalebone/dnsqlog
 
 ENTRYPOINT ["/usr/sbin/kresd"]
 CMD ["-c", "/etc/knot-resolver/kresd.conf"]

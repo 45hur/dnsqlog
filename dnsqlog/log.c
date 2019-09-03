@@ -15,7 +15,7 @@ void debugLog(const char *format, ...)
 	if (getenv("DEBUGLOG") == NULL)
 		return;
 
-	char text[4096] = { 0 };
+	char text[3840] = { 0 };
 	va_list argptr;
 	va_start(argptr, format);
 	vsprintf(text, format, argptr);
@@ -30,7 +30,7 @@ void debugLog(const char *format, ...)
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	strftime(timebuf, 26, "%Y/%m/%d %H:%M:%S", timeinfo);
-	sprintf(message, "{\"timestamp\":\"%s\",\"tid\":\"%xl\",%s}\n", timebuf, pthread_self(), text);
+	sprintf(message, "{\"timestamp\":\"%s\",\"tid\":\"%lu\",%s}\n", timebuf, pthread_self(), text);
 
 	fprintf(stdout, "%s", message);
 
@@ -54,7 +54,7 @@ void debugLog(const char *format, ...)
 
 void fileLog(const char *format, ...)
 {
-	char text[4096] = { 0 };
+	char text[3840] = { 0 };
 	va_list argptr;
 	va_start(argptr, format);
 	vsprintf(text, format, argptr);
@@ -93,7 +93,7 @@ void fileLog(const char *format, ...)
 
 void auditLog(const char *format, ...)
 {
-	char text[4096] = { 0 };
+	char text[3840] = { 0 };
 	va_list argptr;
 	va_start(argptr, format);
 	vsprintf(text, format, argptr);

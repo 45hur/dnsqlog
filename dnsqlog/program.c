@@ -90,7 +90,7 @@ int search(const char * domainToFind, struct ip_addr * userIpAddress, const char
 	unsigned long long crcIoC = crc64(0, (const char*)domainToFind, strlen(originaldomain));
 	//debugLog("\"method\":\"search\",\"message\":\"entry\",\"ioc=\"%s\",\"crc\":\"%llx\",\"crcioc\":\"%llx\"", domainToFind, crc, crcIoC);
 
-	fileLog("\"method\":\"search\",\"message\":\"detected ioc '%s' at domain '%s' from ip '%s%'\"", domainToFind, originaldomain, userIpAddressString);
+	fileLog("\"method\":\"search\",\"message\":\"detected ioc '%s' at domain '%s' from ip '%s'\"", domainToFind, originaldomain, userIpAddressString);
 
 	return 0;
 }
