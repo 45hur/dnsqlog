@@ -39,6 +39,7 @@ void debugLog(const char *format, ...)
 
 	fprintf(stdout, "%s", message);
 
+	pthread_mutex_lock(&(thread_shared->mutex));
 	if (fh == 0)
 	{
 		fh = fopen(C_MOD_LOGDEBUG, "at");
@@ -48,13 +49,15 @@ void debugLog(const char *format, ...)
 		}
 		if (!fh)
 		{
-			return;
+			goto end;
 		}
 	}
 
 	fputs(message, fh);
 	fflush(fh);
 	fclose(fh);
+end:
+	pthread_mutex_unlock(&(thread_shared->mutex));
 }
 
 void fileLog(const char *format, ...)
@@ -78,6 +81,7 @@ void fileLog(const char *format, ...)
 
 	fprintf(stdout, "%s", message);
 
+	pthread_mutex_lock(&(thread_shared->mutex));
 	if (fh == 0)
 	{
 		fh = fopen(C_MOD_LOGFILE, "at");
@@ -87,50 +91,13 @@ void fileLog(const char *format, ...)
 		}
 		if (!fh)
 		{
-			return;
+			goto end;
 		}
 	}
 
 	fputs(message, fh);
 	fflush(fh);
 	fclose(fh);
-}
-
-void auditLog(const char *format, ...)
-{
-	char text[3840] = { 0 };
-	va_list argptr;
-	va_start(argptr, format);
-	vsprintf(text, format, argptr);
-	va_end(argptr);
-
-	FILE *fh = 0;
-	char message[4096] = { 0 };
-	char timebuf[30] = { 0 };
-	time_t rawtime;
-	struct tm * timeinfo;
-
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(timebuf, 26, "%Y/%m/%d %H:%M:%S", timeinfo);
-	sprintf(message, "{\"timestamp\":\"%s\",%s}\n", timebuf, text);
-
-	fprintf(stdout, "%s", message);
-
-	if (fh == 0)
-	{
-		fh = fopen(C_MOD_LOGAUDIT, "at");
-		if (!fh)
-		{
-			fh = fopen(C_MOD_LOGAUDIT, "wt");
-		}
-		if (!fh)
-		{
-			return;
-		}
-	}
-
-	fputs(message, fh);
-	fflush(fh);
-	fclose(fh);
+end:
+	pthread_mutex_unlock(&(thread_shared->mutex));	
 }

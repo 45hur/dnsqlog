@@ -30,16 +30,22 @@ int create(void **args)
 	MDB_dbi dbi;
 	MDB_txn *txn = 0;
 	int rc = 0;
-	//int fd = shm_open(C_MOD_MUTEX, O_CREAT | O_TRUNC | O_RDWR, 0600);
-	//if (fd == -1)
-	//	return fd;
+	int fd = shm_open(C_MOD_MUTEX, O_CREAT | O_TRUNC | O_RDWR, 0600);
+	if (fd == -1)
+		return fd;
 
-	//E(ftruncate(fd, sizeof(struct shared)));
+	E(ftruncate(fd, sizeof(struct shared)));
 
-	//thread_shared = (struct shared*)mmap(0, sizeof(struct shared), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	//if (thread_shared == NULL)
-	//	return -1;
-	//thread_shared->sharedResource = 0;
+	thread_shared = (struct shared*)mmap(0, sizeof(struct shared), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (thread_shared == NULL)
+		return -1;
+
+	thread_shared->sharedResource = 0;
+    pthread_mutexattr_t shared;
+    pthread_mutexattr_init(&shared);
+    pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);
+
+    pthread_mutex_init(&(thread_shared->mutex), &shared);
 
 	E(mdb_env_create(&mdb_env));
 	E(mdb_env_set_maxreaders(mdb_env, 16));
@@ -77,6 +83,9 @@ int destroy(void *args)
 	/*void *res = NULL;
 	pthread_t thr_id = (pthread_t)args;
 	E(pthread_join(thr_id, res));*/
+
+	munmap(thread_shared, sizeof(struct shared*));
+    shm_unlink(C_MOD_MUTEX);
 
 	debugLog("\"method\":\"destroy\",\"message\":\"destroyed\"");
 
