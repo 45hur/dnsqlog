@@ -151,8 +151,6 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 				char querieddomain[KNOT_DNAME_MAXLEN];
 				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
 
-				knot_dname_to_str(querieddomain, rr->, KNOT_DNAME_MAXLEN);
-
 				int domainLen = strlen(querieddomain);
 				if (querieddomain[domainLen - 1] == '.')
 				{
