@@ -34,9 +34,8 @@ void debugLog(const char *format, ...)
 	curtime = tv.tv_sec;
 
 	strftime(timebuf, 30, "%m-%d-%Y  %T.", localtime(&curtime));
-	printf("%s%ld", timebuf, tv.tv_usec);
 
-	sprintf(message, "{\"timestamp\":\"%s\",\"tid\":\"%xl\",\"msg\":\"%s\"}\n", timebuf, pthread_self(), text);
+	sprintf(message, "{\"timestamp\":\"%s%ld\",\"tid\":\"%lx\",\"msg\":\"%s\"}\n", timebuf, tv.tv_usec, pthread_self(), text);
 
 	fprintf(stdout, "%s", message);
 
