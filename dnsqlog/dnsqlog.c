@@ -127,6 +127,8 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			{
 				while (knot_rrset_txt_dump_data(rr, j, buf, buflen, 0) < 0) 
 				{
+					debugLog("%s", buf);
+
 					buflen += 4096;
 					if (buflen > 100000) {
 						//WARN("can't print whole section\n");
