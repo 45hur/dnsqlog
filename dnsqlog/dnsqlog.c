@@ -129,12 +129,10 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			style.show_class = true;
 			for (uint16_t j = 0; j < rr->rrs.count; j++) 
 			{
-				debugLog("j=%d", i);
+				debugLog("j=%d", j);
 				
 				while (knot_rrset_txt_dump_data(rr, j, buf, buflen, &style) < 0) 
 				{
-					debugLog("%s", buf);
-
 					buflen += 4096;
 					if (buflen > 100000) {
 						//WARN("can't print whole section\n");
@@ -149,15 +147,15 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 
 					buf = newbuf;
 				}
-			}
 
-			if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
-			{
-				debugLog("\"method\":\"getdomain\",\"message\":\"ANS for %d %s\"", rr->rrs.count, buf);
-			}
-			else
-			{
-				debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
+				{
+					debugLog("\"method\":\"getdomain\",\"message\":\"ANS for %d %s\"", rr->rrs.count, buf);
+				}
+				else
+				{
+					debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+				}
 			}
 		}
 
