@@ -53,7 +53,7 @@ int finish(kr_layer_t *ctx)
 		if (err == 1) //redirect
 		{
 			debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "finish", "redirect", err);
-			return redirect(ctx, rr, (char *)&qname_str);
+			//return redirect(ctx, rr, (char *)&qname_str);
 		}
 		else
 		{
@@ -106,7 +106,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 
 					debugLog("\"method\":\"getdomain\",\"message\":\"authority for %s\"", querieddomain);
 
-					return explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
+					return 0; // explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
 				}
 				else
 				{
@@ -194,7 +194,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 				debugLog("\"method\":\"getdomain\",\"message\":\"query for %s type %d", querieddomain, rr->type);
 				strcpy(qname_Str, querieddomain);
 				*r = rr->type;
-				return explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
+				return 0; //explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
 			}
 			else
 			{
