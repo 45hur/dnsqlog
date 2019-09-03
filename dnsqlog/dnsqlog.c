@@ -123,7 +123,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			
 			size_t buflen = 8192;
 			char *buf = calloc(buflen, 1);
-			knot_dump_style_t style;
+			knot_dump_style_t style = {0};
 			style.verbose = true;
 			style.show_class = true;
 			for (uint16_t j = 0; j < rr->rrs.count; j++) 

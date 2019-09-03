@@ -99,10 +99,13 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	//Get data, if any
 	E(mdb_txn_begin(mdb_env, 0, MDB_TXN_FULL, &txn));
+	debugLog("open");
 	if ((rc = mdb_dbi_open(txn, "cache", 0, &dbi)) == 0)
 	{
 		key.mv_size = sizeof(unsigned long long);
 		key.mv_data = (void *)bkey;
+
+		debugLog("get");
 
 		if ((rc = mdb_get(txn, dbi, &key, &data)) == 0)
 		{
@@ -120,7 +123,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 	//Modify data
 	if (rawtime == 0)
 	{
-		debugLog("Time = 0");
+		debugLog("time = 0");
 
 		time(&rawtime);
 
