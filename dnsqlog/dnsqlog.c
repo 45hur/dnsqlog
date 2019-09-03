@@ -154,9 +154,17 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					querieddomain[domainLen - 1] = '\0';
 				}
 
-				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
+				if (rr->type == KNOT_RRTYPE_A)
 				{
-					fileLog("\"ip\":\"%s\",\"domain\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", querieddomain, userIpAddressString, buf, (int)rr->type);
+					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"A\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
+				}
+				else if (rr->type == KNOT_RRTYPE_AAAA)
+				{
+					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"AAAA\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
+				}
+				else if (rr->type == KNOT_RRTYPE_CNAME)
+				{
+					fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"CNAME\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, buf, rr->ttl);
 				}
 				else
 				{
