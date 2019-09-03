@@ -17,7 +17,7 @@ void debugLog(const char *format, ...)
 	if (getenv("DEBUGLOG") == NULL)
 		return;
 
-	char text[4096] = { 0 };
+	char text[3840] = { 0 };
 	va_list argptr;
 	va_start(argptr, format);
 	vsprintf(text, format, argptr);
@@ -33,7 +33,7 @@ void debugLog(const char *format, ...)
 	gettimeofday(&tv, NULL);
 	curtime = tv.tv_sec;
 
-	strftime(timebuf, 30, "%m-%d-%Y  %T.", localtime(&curtime));
+	strftime(timebuf, 30, "%m-%d-%Y %T.", localtime(&curtime));
 
 	sprintf(message, "{\"timestamp\":\"%s%ld\",\"tid\":\"%lx\",\"msg\":\"%s\"}\n", timebuf, tv.tv_usec, pthread_self(), text);
 
