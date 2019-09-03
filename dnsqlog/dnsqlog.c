@@ -156,7 +156,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 
 				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
 				{
-					fileLog("\"ip\":\"%s\",\"message\":\"%s\"", querieddomain, buf);
+					fileLog("\"ip\":\"%s\",\"domain\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", querieddomain, userIpAddressString, buf, (int)rr->type);
 				}
 				else
 				{
