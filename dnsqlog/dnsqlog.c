@@ -145,18 +145,18 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					buf = newbuf;
 				}
 
-				char querieddomain[KNOT_DNAME_MAXLEN];
-				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
+				// char querieddomain[KNOT_DNAME_MAXLEN];
+				// knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
 
-				int domainLen = strlen(querieddomain);
-				if (querieddomain[domainLen - 1] == '.')
-				{
-					querieddomain[domainLen - 1] = '\0';
-				}
+				// int domainLen = strlen(querieddomain);
+				// if (querieddomain[domainLen - 1] == '.')
+				// {
+				// 	querieddomain[domainLen - 1] = '\0';
+				// }
 
 				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
 				{
-					fileLog("\"ip\":\"%s\",\"query\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", userIpAddressString, querieddomain, buf, rr->type);
+					fileLog("\"ip\":\"%s\",\"query\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", userIpAddressString, "querieddomain", buf, rr->type);
 				}
 				else
 				{
