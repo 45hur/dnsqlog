@@ -119,6 +119,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 		debugLog("\"method\":\"getdomain\",\"message\":\"an count [%d]", (int)an->count);
 		for (unsigned i = 0; i < an->count; ++i)
 		{
+			debugLog("i=%d", i);
 			const knot_rrset_t *rr = knot_pkt_rr(an, i);
 			
 			size_t buflen = 8192;
@@ -128,6 +129,8 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			style.show_class = true;
 			for (uint16_t j = 0; j < rr->rrs.count; j++) 
 			{
+				debugLog("j=%d", i);
+				
 				while (knot_rrset_txt_dump_data(rr, j, buf, buflen, &style) < 0) 
 				{
 					debugLog("%s", buf);
