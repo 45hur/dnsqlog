@@ -116,29 +116,27 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 		}
 
 		const knot_pktsection_t *an = knot_pkt_section(request->answer, KNOT_ANSWER);
-		debugLog("\"method\":\"getdomain\",\"message\":\"an count [%d]\"", (int)an->count);
+		debugLog("\"method\":\"getdomain\",\"message\":\"an count [%d]", (int)an->count);
 		for (unsigned i = 0; i < an->count; ++i)
 		{
 			const knot_rrset_t *rr = knot_pkt_rr(an, i);
 
-			if (rr->type == KNOT_RRTYPE_SOA)
+			if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
 			{
-				char querieddomain[KNOT_DNAME_MAXLEN] = {};
-				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
+				char answer[KNOT_DNAME_MAXLEN] = {};
+				knot_dname_to_str(answer, rr->owner, KNOT_DNAME_MAXLEN);
 
-				int domainLen = strlen(querieddomain);
-				if (querieddomain[domainLen - 1] == '.')
+				int domainLen = strlen(answer);
+				if (answer[domainLen - 1] == '.')
 				{
-					querieddomain[domainLen - 1] = '\0';
+					answer[domainLen - 1] = '\0';
 				}
 
-				debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority for %s\"", querieddomain);
-
-				return explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
+				debugLog("\"method\":\"getdomain\",\"message\":\"ANS for %s\"", answer);
 			}
 			else
 			{
-				debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not SOA [%d]\"", (int)rr->type);
+				debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
 			}
 		}
 
