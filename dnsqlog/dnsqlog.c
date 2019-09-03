@@ -131,36 +131,27 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 				while (knot_rrset_txt_dump_data(rr, j, buf, buflen, &style) < 0) 
 				{
 					buflen += 4096;
-					if (buflen > 100000) 
-					{
+					if (buflen > 100000) {
+						//WARN("can't print whole section\n");
 						break;
 					}
 
 					char *newbuf = realloc(buf, buflen);
-					if (newbuf == NULL) 
-					{
+					if (newbuf == NULL) {
+						//WARN("can't print whole section\n");
 						break;
 					}
 
 					buf = newbuf;
 				}
 
-				// char querieddomain[KNOT_DNAME_MAXLEN];
-				// knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
-
-				// int domainLen = strlen(querieddomain);
-				// if (querieddomain[domainLen - 1] == '.')
-				// {
-				// 	querieddomain[domainLen - 1] = '\0';
-				// }
-
 				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
 				{
-					fileLog("\"ip\":\"%s\",\"query\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", userIpAddressString, "querieddomain", buf, rr->type);
+					debugLog("\"method\":\"getdomain\",\"message\":\"ANS for %d %s\"", rr->rrs.count, buf);
 				}
 				else
 				{
-					debugLog("\"message\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+					debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
 				}
 			}
 		}
