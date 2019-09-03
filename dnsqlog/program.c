@@ -82,12 +82,12 @@ int destroy(void *args)
 
 int increment(const char *client, const char *query, const char *answer, const int type)
 {
-	MDB_dbi dbi = NULL;
+	MDB_dbi dbi;
 	MDB_val key, data;
 	MDB_txn *txn = 0;
 	int rc = 0;
 	char bkey[8] = { 0 };
-	time_t rawtime = NULL;
+	time_t rawtime = 0;
 
 	char combokey[8192] = { 0 };
 	sprintf((char *)&combokey, "%s:%s:%s:%d", client, query, answer, type);
@@ -116,7 +116,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 	mdb_close(mdb_env, dbi);
 
 	//Modify data
-	if (rawtime == NULL)
+	if (rawtime == 0)
 	{
 		time(&rawtime);
 
