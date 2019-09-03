@@ -116,6 +116,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 		}
 
 		const knot_pktsection_t *an = knot_pkt_section(request->answer, KNOT_ANSWER);
+		debugLog("\"method\":\"getdomain\",\"message\":\"an count [%d]\"", (int)an->count);
 		for (unsigned i = 0; i < an->count; ++i)
 		{
 			const knot_rrset_t *rr = knot_pkt_rr(an, i);
@@ -150,13 +151,15 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 				char querieddomain[KNOT_DNAME_MAXLEN];
 				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
 
+				knot_dname_to_str(querieddomain, rr->, KNOT_DNAME_MAXLEN);
+
 				int domainLen = strlen(querieddomain);
 				if (querieddomain[domainLen - 1] == '.')
 				{
 					querieddomain[domainLen - 1] = '\0';
 				}
 
-				debugLog("\"method\":\"getdomain\",\"message\":\"query for %s type %d\" ans %s", querieddomain, rr->type);
+				debugLog("\"method\":\"getdomain\",\"message\":\"query for %s type %d", querieddomain, rr->type);
 				strcpy(qname_Str, querieddomain);
 				*r = rr->type;
 				return explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
