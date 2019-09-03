@@ -119,8 +119,16 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 		debugLog("\"method\":\"getdomain\",\"message\":\"an count [%d]", (int)an->count);
 		for (unsigned i = 0; i < an->count; ++i)
 		{
-			debugLog("i=%d", i);
 			const knot_rrset_t *rr = knot_pkt_rr(an, i);
+			
+			char querieddomain[KNOT_DNAME_MAXLEN];
+			knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
+
+			int domainLen = strlen(querieddomain);
+			if (querieddomain[domainLen - 1] == '.')
+			{
+				querieddomain[domainLen - 1] = '\0';
+			}
 			
 			size_t buflen = 8192;
 			char *buf = calloc(buflen, 1);
@@ -128,20 +136,18 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			style.verbose = true;
 			style.show_class = true;
 			for (uint16_t j = 0; j < rr->rrs.count; j++) 
-			{
-				debugLog("j=%d", j);
-				
+			{			
 				while (knot_rrset_txt_dump_data(rr, j, buf, buflen, &style) < 0) 
 				{
 					buflen += 4096;
-					if (buflen > 100000) {
-						//WARN("can't print whole section\n");
+					if (buflen > 100000) 
+					{
 						break;
 					}
 
 					char *newbuf = realloc(buf, buflen);
-					if (newbuf == NULL) {
-						//WARN("can't print whole section\n");
+					if (newbuf == NULL) 
+					{
 						break;
 					}
 
@@ -150,11 +156,11 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 
 				if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
 				{
-					debugLog("\"method\":\"getdomain\",\"message\":\"ANS for %d %s\"", rr->rrs.count, buf);
+					fileLog("\"ip\":\"%s\",\"query\":\"%s\",\"answer\":\"%s\",\"type\":\"%d\"", userIpAddressString, querieddomain, buf, rr->type);
 				}
 				else
 				{
-					debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+					debugLog("\"message\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
 				}
 			}
 		}
