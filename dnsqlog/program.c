@@ -92,6 +92,8 @@ int increment(const char *client, const char *query, const char *answer, const i
 	char combokey[8192] = { 0 };
 	sprintf((char *)&combokey, "%s:%s:%s:%d", client, query, answer, type);
 
+	debugLog(combokey);
+
 	unsigned long long crc = crc64(0, combokey, strlen(combokey));
 	memcpy(&bkey, &crc, 8);
 
@@ -118,6 +120,8 @@ int increment(const char *client, const char *query, const char *answer, const i
 	//Modify data
 	if (rawtime == 0)
 	{
+		debugLog("Time = 0");
+
 		time(&rawtime);
 
 		txn = 0;
@@ -140,6 +144,8 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	int secs = difftime(now, rawtime);
 
+	debugLog("diff = %d seconds", secs);
+	
 	//Update data
 	txn = 0;
 	E(mdb_txn_begin(mdb_env, 0, 0, &txn));
