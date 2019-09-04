@@ -51,7 +51,7 @@ int create(void **args)
 	E(mdb_env_set_maxdbs(thread_shared->mdb_env, 16));
 	size_t max = 1073741824;
 	E(mdb_env_set_mapsize(thread_shared->mdb_env, max)); //1GB
-	E(mdb_env_open(thread_shared->mdb_env, C_MOD_LMDB_PATH, /*MDB_FIXEDMAP | MDB_NOSYNC*/ 0, 0664));
+	E(mdb_env_open(thread_shared->mdb_env, C_MOD_LMDB_PATH, MDB_FIXEDMAP/* | MDB_NOSYNC 0*/, 0664));
 
 	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
 	E(mdb_open(txn, "cache", MDB_CREATE, &thread_shared->mdb_dbi));
