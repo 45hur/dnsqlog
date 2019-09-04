@@ -37,8 +37,6 @@ int create(void **args)
 	thread_shared = (struct shared*)mmap(0, sizeof(struct shared), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (thread_shared == NULL)
 		return -1;
-	thread_shared->mdb_env = NULL;
-	thread_shared->mdb_dbi = 0;
 
     pthread_mutexattr_t shared;
     pthread_mutexattr_init(&shared);
@@ -46,17 +44,26 @@ int create(void **args)
 
     pthread_mutex_init(&(thread_shared->mutex), &shared);
 
-	E(mdb_env_create(&thread_shared->mdb_env));
-	E(mdb_env_set_maxreaders(thread_shared->mdb_env, 127));
-	E(mdb_env_set_maxdbs(thread_shared->mdb_env, 16));
-	size_t max = 1073741824;
-	E(mdb_env_set_mapsize(thread_shared->mdb_env, max)); //1GB
-	E(mdb_env_open(thread_shared->mdb_env, C_MOD_LMDB_PATH, MDB_FIXEDMAP/* | MDB_NOSYNC 0*/, 0664));
+	pthread_mutex_lock(&(thread_shared->mutex));
+	if (thread_shared->refcount == 0)
+	{
+		thread_shared->mdb_env = NULL;
+		thread_shared->mdb_dbi = 0;
 
-	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
-	E(mdb_open(txn, "cache", MDB_CREATE, &thread_shared->mdb_dbi));
-	E(mdb_txn_commit(txn));
-	mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
+		E(mdb_env_create(&thread_shared->mdb_env));
+		E(mdb_env_set_maxreaders(thread_shared->mdb_env, 127));
+		E(mdb_env_set_maxdbs(thread_shared->mdb_env, 16));
+		size_t max = 1073741824;
+		E(mdb_env_set_mapsize(thread_shared->mdb_env, max)); //1GB
+		E(mdb_env_open(thread_shared->mdb_env, C_MOD_LMDB_PATH, MDB_FIXEDMAP/* | MDB_NOSYNC 0*/, 0664));
+
+		E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
+		E(mdb_open(txn, "cache", MDB_CREATE, &thread_shared->mdb_dbi));
+		E(mdb_txn_commit(txn));
+		mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
+	}
+	thread_shared->refcount++;
+	pthread_mutex_unlock(&(thread_shared->mutex));
 
 	debugLog("\"method\":\"create\",\"message\":\"created\"");
 
@@ -66,9 +73,17 @@ int create(void **args)
 int destroy(void *args)
 {
 	loop = 0;
+	
+	pthread_mutex_lock(&(thread_shared->mutex));
+	thread_shared->refcount--;
+	if (thread_shared->refcount == 0)
+	{
+		mdb_env_close(thread_shared->mdb_env);
 
-	mdb_env_close(thread_shared->mdb_env);
-	thread_shared->mdb_env = NULL;
+		thread_shared->mdb_env = NULL;
+		thread_shared->mdb_dbi = 0;
+	}
+	pthread_mutex_unlock(&(thread_shared->mutex));
 
 	munmap(thread_shared, sizeof(struct shared*));
     shm_unlink(C_MOD_MUTEX);

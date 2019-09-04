@@ -14,6 +14,7 @@ struct shared
 	pthread_mutex_t mutex;
 	MDB_env* mdb_env;
 	MDB_dbi mdb_dbi;
+	int refcount;
 };
 
 struct shared *thread_shared;
