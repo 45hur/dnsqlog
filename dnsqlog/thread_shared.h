@@ -7,10 +7,13 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#include "lmdb.h"
+
 struct shared
 {
 	pthread_mutex_t mutex;
-	int sharedResource;
+	MDB_env* mdb_env;
+	MDB_dbi mdb_dbi;
 };
 
 struct shared *thread_shared;

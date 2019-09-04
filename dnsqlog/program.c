@@ -26,8 +26,6 @@ int loop = 1;
 
 int create(void **args)
 {
-	MDB_env *mdb_env = NULL;
-	MDB_dbi dbi;
 	MDB_txn *txn = NULL;
 	int rc = 0;
 	int fd = shm_open(C_MOD_MUTEX, O_CREAT | O_TRUNC | O_RDWR, 0600);
@@ -39,28 +37,26 @@ int create(void **args)
 	thread_shared = (struct shared*)mmap(0, sizeof(struct shared), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (thread_shared == NULL)
 		return -1;
+	thread_shared->mdb_env = NULL;
+	thread_shared->mdb_dbi = 0;
 
-	thread_shared->sharedResource = 0;
     pthread_mutexattr_t shared;
     pthread_mutexattr_init(&shared);
     pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);
 
     pthread_mutex_init(&(thread_shared->mutex), &shared);
 
-	E(mdb_env_create(&mdb_env));
-	E(mdb_env_set_maxreaders(mdb_env, 127));
-	E(mdb_env_set_maxdbs(mdb_env, 16));
+	E(mdb_env_create(&thread_shared->mdb_env));
+	E(mdb_env_set_maxreaders(thread_shared->mdb_env, 127));
+	E(mdb_env_set_maxdbs(thread_shared->mdb_env, 16));
 	size_t max = 1073741824;
-	E(mdb_env_set_mapsize(mdb_env, max)); //1GB
-	E(mdb_env_open(mdb_env, C_MOD_LMDB_PATH, /*MDB_FIXEDMAP | MDB_NOSYNC*/ 0, 0664));
+	E(mdb_env_set_mapsize(thread_shared->mdb_env, max)); //1GB
+	E(mdb_env_open(thread_shared->mdb_env, C_MOD_LMDB_PATH, /*MDB_FIXEDMAP | MDB_NOSYNC*/ 0, 0664));
 
-	E(mdb_txn_begin(mdb_env, 0, 0, &txn));
-	E(mdb_dbi_open(txn, "cache", MDB_CREATE, &dbi));
+	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
+	E(mdb_open(txn, "cache", MDB_CREATE, &thread_shared->mdb_dbi));
 	E(mdb_txn_commit(txn));
-	mdb_close(mdb_env, dbi);
-	
-	mdb_env_close(mdb_env);
-	mdb_env = NULL;
+	mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
 
 	debugLog("\"method\":\"create\",\"message\":\"created\"");
 
@@ -69,8 +65,10 @@ int create(void **args)
 
 int destroy(void *args)
 {
-	int rc = 0;
 	loop = 0;
+
+	mdb_env_close(thread_shared->mdb_env);
+	thread_shared->mdb_env = NULL;
 
 	munmap(thread_shared, sizeof(struct shared*));
     shm_unlink(C_MOD_MUTEX);
@@ -82,8 +80,6 @@ int destroy(void *args)
 
 int increment(const char *client, const char *query, const char *answer, const int type)
 {
-	MDB_env *mdb_env = NULL;
-	MDB_dbi dbi;
 	MDB_val key, data;
 	MDB_txn *txn = NULL;
 	int rc = 0;
@@ -98,24 +94,17 @@ int increment(const char *client, const char *query, const char *answer, const i
 	unsigned long long crc = crc64(0, combokey, strlen(combokey));
 	memcpy(&bkey, &crc, 8);
 
-	//Init LMDB
-	E(mdb_env_create(&mdb_env));
-	E(mdb_env_set_maxreaders(mdb_env, 127));
-	E(mdb_env_set_maxdbs(mdb_env, 16));
-	size_t max = 1073741824;
-	E(mdb_env_set_mapsize(mdb_env, max)); //1GB
-
 	//Get data, if any
-	E(mdb_txn_begin(mdb_env, 0, MDB_TXN_FULL, &txn));
+	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
 	debugLog("open");
-	if ((rc = mdb_dbi_open(txn, "cache", 0, &dbi)) == 0)
+	if ((rc = mdb_open(txn, "cache", 0, &thread_shared->mdb_dbi)) == 0)
 	{
 		key.mv_size = sizeof(unsigned long long);
 		key.mv_data = (void *)bkey;
 
 		debugLog("get");
 
-		if ((rc = mdb_get(txn, dbi, &key, &data)) == 0)
+		if ((rc = mdb_get(txn, thread_shared->mdb_dbi, &key, &data)) == 0)
 		{
 			memcpy(&rawtime, data.mv_data, data.mv_size);
 		}
@@ -126,7 +115,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 		mdb_txn_abort(txn);
 	}
 	txn = NULL;
-	mdb_close(mdb_env, dbi);
+	mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
 
 	//Modify data
 	if (rawtime == 0)
@@ -136,20 +125,17 @@ int increment(const char *client, const char *query, const char *answer, const i
 		time(&rawtime);
 
 		txn = 0;
-		E(mdb_txn_begin (mdb_env, 0, 0, &txn));
-		E(mdb_dbi_open(txn, "cache", 0, &dbi));
+		E(mdb_txn_begin (thread_shared->mdb_env, 0, 0, &txn));
+		E(mdb_open(txn, "cache", 0, &thread_shared->mdb_dbi));
 		key.mv_size = sizeof(unsigned long long);
 		key.mv_data = (void *)bkey;
 		data.mv_size = sizeof(time_t);
 		data.mv_data = (void *)&rawtime;
-		E(mdb_put(txn, dbi, &key, &data, 0));
+		E(mdb_put(txn, thread_shared->mdb_dbi, &key, &data, 0));
 
 		E(mdb_txn_commit(txn));
-		mdb_close(mdb_env, dbi);
+		mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
 		txn = NULL;
-
-		mdb_env_close(mdb_env);
-		mdb_env = NULL;
 
 		return 1;
 	}
@@ -157,26 +143,23 @@ int increment(const char *client, const char *query, const char *answer, const i
 	time_t now;
 	time(&now);
 
-	int secs = difftime(now, rawtime);
+	double secs = difftime(now, rawtime);
 
 	debugLog("diff = %d seconds", secs);
 	
 	//Update data
 	txn = 0;
-	E(mdb_txn_begin(mdb_env, 0, 0, &txn));
-	E(mdb_dbi_open(txn, "cache", 0, &dbi));
+	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
+	E(mdb_open(txn, "cache", 0, &thread_shared->mdb_dbi));
 	key.mv_size = sizeof(unsigned long long);
 	key.mv_data = (void *)bkey;
 	data.mv_size = sizeof(time_t);
 	data.mv_data = (void *)&now;
-	E(mdb_put(txn, dbi, &key, &data, 0));
+	E(mdb_put(txn, thread_shared->mdb_dbi, &key, &data, 0));
 
 	E(mdb_txn_commit(txn));
-	mdb_close(mdb_env, dbi);
+	mdb_close(thread_shared->mdb_env, thread_shared->mdb_dbi);
 	txn = NULL;
-
-	mdb_env_close(mdb_env);
-	mdb_env = NULL;
 
 	if (secs > 86400) // one day
 	{
