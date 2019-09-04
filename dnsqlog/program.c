@@ -23,12 +23,12 @@
 #define CHECK(test, msg) ((test) ? (void)0 : ((void)debugLog("%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 
 int loop = 1;
-MDB_env *mdb_env = 0;
 
 int create(void **args)
 {
+	MDB_env *mdb_env = NULL;
 	MDB_dbi dbi;
-	MDB_txn *txn = 0;
+	MDB_txn *txn = NULL;
 	int rc = 0;
 	int fd = shm_open(C_MOD_MUTEX, O_CREAT | O_TRUNC | O_RDWR, 0600);
 	if (fd == -1)
@@ -58,6 +58,9 @@ int create(void **args)
 	E(mdb_dbi_open(txn, "cache", MDB_CREATE, &dbi));
 	E(mdb_txn_commit(txn));
 	mdb_close(mdb_env, dbi);
+	
+	mdb_env_close(mdb_env);
+	mdb_env = NULL;
 
 	debugLog("\"method\":\"create\",\"message\":\"created\"");
 
@@ -69,9 +72,6 @@ int destroy(void *args)
 	int rc = 0;
 	loop = 0;
 
-	mdb_env_close(mdb_env);
-	mdb_env = NULL;
-
 	munmap(thread_shared, sizeof(struct shared*));
     shm_unlink(C_MOD_MUTEX);
 
@@ -82,9 +82,10 @@ int destroy(void *args)
 
 int increment(const char *client, const char *query, const char *answer, const int type)
 {
+	MDB_env *mdb_env = NULL;
 	MDB_dbi dbi;
 	MDB_val key, data;
-	MDB_txn *txn = 0;
+	MDB_txn *txn = NULL;
 	int rc = 0;
 	char bkey[8] = { 0 };
 	time_t rawtime = 0;
@@ -96,6 +97,13 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	unsigned long long crc = crc64(0, combokey, strlen(combokey));
 	memcpy(&bkey, &crc, 8);
+
+	//Init LMDB
+	E(mdb_env_create(&mdb_env));
+	E(mdb_env_set_maxreaders(mdb_env, 127));
+	E(mdb_env_set_maxdbs(mdb_env, 16));
+	size_t max = 1073741824;
+	E(mdb_env_set_mapsize(mdb_env, max)); //1GB
 
 	//Get data, if any
 	E(mdb_txn_begin(mdb_env, 0, MDB_TXN_FULL, &txn));
@@ -117,7 +125,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 	{
 		mdb_txn_abort(txn);
 	}
-	txn = 0;
+	txn = NULL;
 	mdb_close(mdb_env, dbi);
 
 	//Modify data
@@ -138,6 +146,10 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 		E(mdb_txn_commit(txn));
 		mdb_close(mdb_env, dbi);
+		txn = NULL;
+
+		mdb_env_close(mdb_env);
+		mdb_env = NULL;
 
 		return 1;
 	}
@@ -161,6 +173,10 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	E(mdb_txn_commit(txn));
 	mdb_close(mdb_env, dbi);
+	txn = NULL;
+
+	mdb_env_close(mdb_env);
+	mdb_env = NULL;
 
 	if (secs > 86400) // one day
 	{
