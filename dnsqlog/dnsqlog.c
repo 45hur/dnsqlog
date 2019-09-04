@@ -154,7 +154,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					querieddomain[domainLen - 1] = '\0';
 				}
 
-				if (increment(userIpAddressString, querieddomain, buf, rr->ttl) == 1)
+				if (increment(userIpAddressString, querieddomain, buf, rr->type) == 1)
 				{
 					if (rr->type == KNOT_RRTYPE_A)
 					{

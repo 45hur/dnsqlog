@@ -143,7 +143,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 	time_t now;
 	time(&now);
 
-	double secs = difftime(now, rawtime);
+	int secs = (int)difftime(now, rawtime);
 
 	debugLog("diff = %d seconds", secs);
 	
