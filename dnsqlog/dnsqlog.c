@@ -186,7 +186,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 		{
 			const knot_rrset_t *rr = knot_pkt_rr(ns, i);
 
-			if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME)
+			if (rr->type == KNOT_RRTYPE_A || rr->type == KNOT_RRTYPE_AAAA || rr->type == KNOT_RRTYPE_CNAME || rr->type == KNOT_RRTYPE_TXT)
 			{
 				char querieddomain[KNOT_DNAME_MAXLEN];
 				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
@@ -204,7 +204,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 			}
 			else
 			{
-				debugLog("\"method\":\"getdomain\",\"message\":\"rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+				debugLog("\"method\":\"getdomain\",\"message\":\"rr type is not A, AAAA, TXT or CNAME [%d]\"", (int)rr->type);
 			}
 		}
 	}
