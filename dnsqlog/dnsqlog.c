@@ -154,6 +154,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 				if (strlen(buf) <= 3)
 				{
 					free (buf);
+					buflen = 8192;
 					buf = calloc(buflen, 1);
 					while (knot_rrset_txt_dump(rr, buf, buflen, &style) < 0)
 					{
