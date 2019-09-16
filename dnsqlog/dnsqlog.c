@@ -151,28 +151,20 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					buf = newbuf;
 				}
 
-				//if (strlen(buf) <= 3)
-				//{
-				//	free (buf);
-				//	buflen = 8192;
-				//	buf = calloc(buflen, 1);
-				//	while (knot_rrset_txt_dump(rr, buf, buflen, &style) < 0)
-				//	{
-				//		buflen += 4096;
-				//		if (buflen > 100000) {
-				//			//WARN("can't print whole section\n");
-				//			break;
-				//		}
-
-				//		char *newbuf = realloc(buf, buflen);
-				//		if (newbuf == NULL) {
-				//			//WARN("can't print whole section\n");
-				//			break;
-				//		}
-
-				//		buf = newbuf;
-				//	}
-				//}
+				if (strlen(buf) <= 3)
+				{
+					size_t bufsize = 128;
+					char *buf2 = malloc(bufsize);
+					int ret = knot_rrset_txt_dump(rr, &buf2, &bufsize, &KNOT_DUMP_STYLE_DEFAULT);
+					if (ret < 0) 
+					{
+						free(buf2);
+						debugLog("OOM");
+						return NULL;
+					}
+					
+					sprintf(buf, "%s", buf2);
+				}
 
 				char querieddomain[KNOT_DNAME_MAXLEN];
 				knot_dname_to_str(querieddomain, rr->owner, KNOT_DNAME_MAXLEN);
