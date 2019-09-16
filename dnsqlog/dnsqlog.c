@@ -12,27 +12,33 @@ int begin(kr_layer_t *ctx)
 {
 	debugLog("\"%s\":\"%s\"", "debug", "begin");
 
-	return ctx->state;
+	return process(ctx);
 }
 
 int consume(kr_layer_t *ctx, knot_pkt_t *pkt)
 {
 	debugLog("\"%s\":\"%s\"", "debug", "consume");
 	
-	return ctx->state;
+	return process(ctx);
 }
 
 int produce(kr_layer_t *ctx, knot_pkt_t *pkt)
 {
 	debugLog("\"%s\":\"%s\"", "debug", "produce");
 
-	return ctx->state;
+	return process(ctx);
 }
 
 int finish(kr_layer_t *ctx)
 {
-	//debugLog("\"%s\":\"%s\"", "debug", "finish");
+	debugLog("\"%s\":\"%s\"", "debug", "finish");
 
+	return process(ctx);
+}
+
+
+int process(kr_layer_t *ctx)
+{
 	char userIpAddressString[256] = { 0 };
 	int err = 0;
 	struct ip_addr userIpAddress = { 0 };
@@ -41,7 +47,7 @@ int finish(kr_layer_t *ctx)
 	{
 		//return err; generates log message --- [priming] cannot resolve '.' NS, next priming query in 10 seconds
 		//we do not care about no address sources
-		debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "finish", "getip", err);
+		debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "process", "getip", err);
 
 		return ctx->state;
 	}
@@ -52,12 +58,12 @@ int finish(kr_layer_t *ctx)
 	{
 		if (err == 1) //redirect
 		{
-			debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "finish", "redirect", err);
+			//debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "process", "redirect", err);
 			//return redirect(ctx, rr, (char *)&qname_str);
 		}
 		else
 		{
-			debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "finish", "getdomain", err);
+			debugLog("\"%s\":\"%s\",\"%s\":\"%x\"", "error", "process", "getdomain", err);
 			ctx->state = KR_STATE_FAIL;
 		}
 	}
@@ -86,7 +92,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 
 		if (ns->count == 0)
 		{
-			debugLog("\"method\":\"getdomain\",\"message\":\"query has no asnwer\"");
+			//debugLog("\"method\":\"getdomain\",\"message\":\"query has no asnwer\"");
 
 			const knot_pktsection_t *au = knot_pkt_section(request->answer, KNOT_AUTHORITY);
 			for (unsigned i = 0; i < au->count; ++i)
@@ -104,13 +110,13 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 						querieddomain[domainLen - 1] = '\0';
 					}
 
-					debugLog("\"method\":\"getdomain\",\"message\":\"authority for %s\"", querieddomain);
+					//debugLog("\"method\":\"getdomain\",\"message\":\"authority for %s\"", querieddomain);
 
 					return 0; // explode((char *)&querieddomain, userIpAddress, userIpAddressString, rr->type);
 				}
 				else
 				{
-					debugLog("\"method\":\"getdomain\",\"message\":\"authority rr type is not SOA [%d]\"", (int)rr->type);
+					//debugLog("\"method\":\"getdomain\",\"message\":\"authority rr type is not SOA [%d]\"", (int)rr->type);
 				}
 			}
 		}
@@ -170,7 +176,7 @@ int checkDomain(char * qname_Str, int * r, kr_layer_t *ctx, struct ip_addr *user
 					}
 					else
 					{
-						debugLog("\"method\":\"getdomain\",\"message\":\"ANS authority rr type is not A, AAAA or CNAME [%d]\"", (int)rr->type);
+						fileLog("\"client\":\"%s\",\"query\":\"%s\",\"type\":\"%d\",\"answer\":\"%s\",\"ttl\":\"%d\"", userIpAddressString, querieddomain, rr->type, buf, rr->ttl);
 					}
 				}
 			}

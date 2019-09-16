@@ -111,13 +111,13 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	//Get data, if any
 	E(mdb_txn_begin(thread_shared->mdb_env, 0, 0, &txn));
-	debugLog("open");
+	//debugLog("open");
 	if ((rc = mdb_open(txn, "cache", 0, &thread_shared->mdb_dbi)) == 0)
 	{
 		key.mv_size = sizeof(unsigned long long);
 		key.mv_data = (void *)bkey;
 
-		debugLog("get");
+		//debugLog("get");
 
 		if ((rc = mdb_get(txn, thread_shared->mdb_dbi, &key, &data)) == 0)
 		{
@@ -135,7 +135,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 	//Modify data
 	if (rawtime == 0)
 	{
-		debugLog("time = 0");
+		//debugLog("time = 0");
 
 		time(&rawtime);
 
@@ -160,7 +160,7 @@ int increment(const char *client, const char *query, const char *answer, const i
 
 	int secs = (int)difftime(now, rawtime);
 
-	debugLog("diff = %d seconds", secs);
+	//debugLog("diff = %d seconds", secs);
 	
 	//Update data
 	txn = 0;
